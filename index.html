@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meeting Minutes — Fontaine Heavy Haul</title>
+<style>
+  :root {
+    --bg:      #F5F6F8;
+    --surface: #FFFFFF;
+    --surface2:#F0F1F3;
+    --nav:     #1E2A3A;
+    --border:  #E2E4E8;
+    --text:    #1A1A2E;
+    --muted:   #6B7280;
+    --blue:    #2563EB;
+    --green:   #16A34A;
+    --yellow:  #CA8A04;
+    --red:     #DC2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  .nav {
+    background: var(--nav); color: #fff;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px; height: 54px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .nav-brand { font-size: 13px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+  .nav-brand span { color: #7FA8D4; font-weight: 400; margin-left: 8px; }
+  .nav-right { font-size: 12px; color: #7FA8D4; }
+
+  .main { max-width: 780px; margin: 32px auto; padding: 0 20px 60px; }
+  .page-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .page-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin-bottom: 20px; }
+  .card-title {
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--muted); margin-bottom: 16px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); flex-shrink: 0; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  @media (max-width: 580px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
+  input, textarea {
+    width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 14px; font-family: inherit; color: var(--text); background: var(--surface2);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.1); background: var(--surface); }
+  textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+
+  /* TAGS */
+  .tag-container {
+    min-height: 44px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface2); display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    cursor: text; transition: border-color .15s, box-shadow .15s;
+  }
+  .tag-container:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.1); background: var(--surface); }
+  .tag { background: var(--nav); color: #fff; border-radius: 4px; padding: 3px 8px; font-size: 13px; display: flex; align-items: center; gap: 5px; }
+  .tag button { background: none; border: none; color: #7FA8D4; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; width: auto; }
+  .tag button:hover { color: #fff; }
+  .tag-input { border: none; background: transparent; outline: none; font-size: 14px; font-family: inherit; color: var(--text); min-width: 140px; flex: 1; padding: 3px 4px; }
+  .tag-hint { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+  /* DISCUSSION ROWS */
+  .list-section { display: flex; flex-direction: column; gap: 10px; }
+  .item-row { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; position: relative; }
+  .item-row .row-num { position: absolute; top: 12px; left: 14px; font-size: 11px; font-weight: 700; color: var(--muted); width: 18px; }
+  .item-row .row-body { margin-left: 24px; }
+  .item-row textarea { background: var(--surface); min-height: 60px; }
+  .item-row input { background: var(--surface); }
+
+  .btn-remove { position: absolute; top: 10px; right: 10px; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px; line-height: 1; padding: 2px 4px; border-radius: 4px; transition: color .15s, background .15s; }
+  .btn-remove:hover { color: var(--red); background: #FEE2E2; }
+  .btn-add { display: flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 6px; border: 1.5px dashed var(--border); background: var(--surface2); color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color .15s, color .15s; width: 100%; justify-content: center; }
+  .btn-add:hover { border-color: var(--blue); color: var(--blue); }
+
+  /* ACTION TOGGLE */
+  .action-grid { display: grid; grid-template-columns: 1fr 160px 130px; gap: 10px; align-items: start; }
+  @media (max-width: 580px) { .action-grid { grid-template-columns: 1fr; } }
+  .action-toggle-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+  .action-toggle-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue); cursor: pointer; flex-shrink: 0; }
+  .action-toggle-label { font-size: 13px; font-weight: 600; color: var(--blue); cursor: pointer; user-select: none; }
+  .inline-action-fields { display: none; flex-direction: column; gap: 10px; margin-top: 10px; padding: 12px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; }
+  .inline-action-fields.visible { display: flex; }
+  .inline-action-fields input { background: var(--surface); }
+  .action-badge { display: inline-flex; align-items: center; gap: 4px; background: #DBEAFE; color: var(--blue); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-left: auto; }
+
+  /* SUBMIT */
+  .submit-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+  .submit-row { display: flex; gap: 12px; align-items: center; }
+  @media (max-width: 580px) { .submit-row { flex-direction: column; align-items: stretch; } }
+
+  .recipient-list { display: flex; flex-direction: column; gap: 8px; }
+  .recipient-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); cursor: pointer; transition: border-color .15s, background .15s; user-select: none; }
+  .recipient-row:hover { border-color: var(--blue); background: #EFF6FF; }
+  .recipient-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue); cursor: pointer; flex-shrink: 0; }
+  .recipient-row.checked { border-color: var(--blue); background: #EFF6FF; }
+  .recipient-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .recipient-email { font-size: 12px; color: var(--muted); margin-left: auto; }
+
+  .custom-email-row { display: flex; gap: 8px; align-items: center; }
+  .custom-email-row input { flex: 1; }
+  .btn-add-email { padding: 9px 14px; border-radius: 6px; background: var(--surface2); color: var(--blue); border: 1.5px solid var(--blue); font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: background .15s; }
+  .btn-add-email:hover { background: #EFF6FF; }
+  .custom-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .custom-tag { background: var(--nav); color: #fff; border-radius: 4px; padding: 3px 10px; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+  .custom-tag button { background: none; border: none; color: #7FA8D4; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; }
+  .custom-tag button:hover { color: #fff; }
+
+  .btn-submit { padding: 11px 22px; border-radius: 6px; background: var(--blue); color: #fff; border: none; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: background .15s, transform .1s; display: flex; align-items: center; gap: 8px; }
+  .btn-submit:hover { background: #1D4ED8; }
+  .btn-submit:active { transform: scale(.98); }
+  .btn-submit:disabled { background: #93C5FD; cursor: not-allowed; }
+  .btn-clear { padding: 11px 18px; border-radius: 6px; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .15s; }
+  .btn-clear:hover { background: #E5E7EB; }
+
+  /* BANNER */
+  .banner { border-radius: 6px; padding: 14px 16px; font-size: 13px; display: none; }
+  .banner.success { background: #F0FDF4; border: 1px solid #86EFAC; color: #166534; display: block; }
+  .banner.error   { background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B; display: block; }
+  .banner.loading { background: #EFF6FF; border: 1px solid #BFDBFE; color: #1E40AF; display: block; }
+
+  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--nav); color: #fff; padding: 12px 22px; border-radius: 8px; font-size: 14px; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 9999; white-space: nowrap; }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">Fontaine Heavy Haul <span>Meeting Minutes</span></div>
+  <div class="nav-right">Internal Documentation</div>
+</nav>
+
+<div class="main">
+  <div class="page-title">Meeting Minutes</div>
+  <div class="page-sub">Complete all sections and click Submit — a PDF will be emailed automatically.</div>
+
+  <!-- MEETING INFO -->
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Meeting Information</div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="grid-3">
+        <div class="field-group"><label>Date</label><input type="date" id="f-date"></div>
+        <div class="field-group"><label>Time</label><input type="time" id="f-time"></div>
+        <div class="field-group"><label>Location / Platform</label><input type="text" id="f-location" placeholder="e.g. Conference Room B, Teams"></div>
+      </div>
+      <div class="field-group"><label>Meeting Topic / Title</label><input type="text" id="f-topic" placeholder="e.g. Q3 Production Review"></div>
+      <div class="grid-2">
+        <div class="field-group"><label>Facilitator</label><input type="text" id="f-facilitator" placeholder="Name"></div>
+        <div class="field-group"><label>Minutes Recorded By</label><input type="text" id="f-recorder" placeholder="Name"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTICIPANTS -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--green)"></span>Participants</div>
+    <label>Attendees <span style="font-weight:400;text-transform:none;letter-spacing:0">(type name, press Enter or comma to add)</span></label>
+    <div class="tag-container" id="tag-container" onclick="document.getElementById('tag-input').focus()">
+      <input type="text" id="tag-input" class="tag-input" placeholder="Add participant…">
+    </div>
+    <div class="tag-hint">Press <strong>Enter</strong> or <strong>,</strong> after each name</div>
+  </div>
+
+  <!-- ITEMS DISCUSSED -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Items Discussed & Action Items</div>
+    <div class="list-section" id="discussed-list"></div>
+    <button class="btn-add" onclick="addDiscussedItem()" style="margin-top:12px">+ Add Discussion Item</button>
+  </div>
+
+  <!-- NOTES -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--muted)"></span>Additional Notes</div>
+    <div class="field-group">
+      <label>Decisions Made / Next Meeting / Other Notes</label>
+      <textarea id="f-notes" placeholder="Any additional decisions, next meeting date, or general notes…"></textarea>
+    </div>
+  </div>
+
+  <!-- SUBMIT -->
+  <div class="submit-card">
+    <div style="font-size:13px;font-weight:700;color:var(--text)">Send Minutes To</div>
+
+    <div class="recipient-list">
+      <label class="recipient-row checked" id="row-0">
+        <input type="checkbox" checked onchange="toggleRow(0,this)" id="chk-0">
+        <span class="recipient-name">W. Barfield</span>
+        <span class="recipient-email">wbarfield@fontainespecialized.com</span>
+      </label>
+      <label class="recipient-row checked" id="row-1">
+        <input type="checkbox" checked onchange="toggleRow(1,this)" id="chk-1">
+        <span class="recipient-name">D. Anderson</span>
+        <span class="recipient-email">danderson@fontainespecialized.com</span>
+      </label>
+      <label class="recipient-row checked" id="row-2">
+        <input type="checkbox" checked onchange="toggleRow(2,this)" id="chk-2">
+        <span class="recipient-name">J. Bowman</span>
+        <span class="recipient-email">jbowman@fontainespecialized.com</span>
+      </label>
+    </div>
+
+    <div>
+      <label style="margin-bottom:8px">Add Additional Recipient</label>
+      <div class="custom-email-row">
+        <input type="email" id="f-custom-email" placeholder="someone@fontainespecialized.com" onkeydown="if(event.key==='Enter')addCustomEmail()">
+        <button class="btn-add-email" onclick="addCustomEmail()">+ Add</button>
+      </div>
+      <div class="custom-tags" id="custom-tags"></div>
+    </div>
+
+    <div class="submit-row" style="justify-content:flex-end">
+      <button class="btn-clear" onclick="clearForm()">Clear Form</button>
+      <button class="btn-submit" onclick="submitForm()" id="btn-submit">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+        Submit & Send PDF
+      </button>
+    </div>
+
+    <div class="banner" id="banner"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  let participants = [];
+  let discussedCount = 0;
+  let customEmails = [];
+
+  const DEFAULT_RECIPIENTS = [
+    { name: 'W. Barfield', email: 'wbarfield@fontainespecialized.com' },
+    { name: 'D. Anderson', email: 'danderson@fontainespecialized.com' },
+    { name: 'J. Bowman',   email: 'jbowman@fontainespecialized.com'   },
+  ];
+
+  (function init() {
+    const today = new Date();
+    document.getElementById('f-date').valueAsDate = today;
+    const hh = String(today.getHours()).padStart(2,'0');
+    const mm = String(today.getMinutes()).padStart(2,'0');
+    document.getElementById('f-time').value = `${hh}:${mm}`;
+    addDiscussedItem();
+    addDiscussedItem();
+  })();
+
+  // ── TAGS ─────────────────────────────────────────────────────────────────
+  document.getElementById('tag-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(this.value); }
+    if (e.key === 'Backspace' && this.value === '' && participants.length > 0) removeTag(participants[participants.length - 1]);
+  });
+  document.getElementById('tag-input').addEventListener('blur', function() { if (this.value.trim()) addTag(this.value); });
+
+  function addTag(val) {
+    const name = val.replace(/,/g,'').trim();
+    if (!name || participants.includes(name)) { document.getElementById('tag-input').value = ''; return; }
+    participants.push(name);
+    renderTags();
+    document.getElementById('tag-input').value = '';
+  }
+  function removeTag(name) { participants = participants.filter(p => p !== name); renderTags(); }
+  function renderTags() {
+    const container = document.getElementById('tag-container');
+    const input = document.getElementById('tag-input');
+    container.querySelectorAll('.tag').forEach(t => t.remove());
+    participants.forEach(name => {
+      const tag = document.createElement('div');
+      tag.className = 'tag';
+      tag.innerHTML = `${escHtml(name)}<button onclick="removeTag('${name.replace(/'/g,"\\'")}')">×</button>`;
+      container.insertBefore(tag, input);
+    });
+  }
+
+  // ── RECIPIENTS ────────────────────────────────────────────────────────────
+  function toggleRow(idx, cb) {
+    const row = document.getElementById(`row-${idx}`);
+    if (cb.checked) row.classList.add('checked'); else row.classList.remove('checked');
+  }
+  function addCustomEmail() {
+    const input = document.getElementById('f-custom-email');
+    const val = input.value.trim();
+    if (!val) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) { toast('Please enter a valid email address.', true); return; }
+    if (customEmails.includes(val)) { input.value = ''; return; }
+    customEmails.push(val);
+    renderCustomTags();
+    input.value = '';
+  }
+  function removeCustomEmail(email) { customEmails = customEmails.filter(e => e !== email); renderCustomTags(); }
+  function renderCustomTags() {
+    const container = document.getElementById('custom-tags');
+    container.innerHTML = '';
+    customEmails.forEach(email => {
+      const tag = document.createElement('div');
+      tag.className = 'custom-tag';
+      tag.innerHTML = `${escHtml(email)}<button onclick="removeCustomEmail('${email.replace(/'/g,"\\'")}')">×</button>`;
+      container.appendChild(tag);
+    });
+  }
+  function getSelectedEmails() {
+    const emails = [];
+    DEFAULT_RECIPIENTS.forEach((r, i) => { if (document.getElementById(`chk-${i}`)?.checked) emails.push(r.email); });
+    customEmails.forEach(e => emails.push(e));
+    return emails;
+  }
+
+  // ── DISCUSSION ITEMS ──────────────────────────────────────────────────────
+  function addDiscussedItem() {
+    discussedCount++;
+    const n = discussedCount;
+    const list = document.getElementById('discussed-list');
+    const div = document.createElement('div');
+    div.className = 'item-row'; div.id = `disc-${n}`;
+    div.innerHTML = `
+      <div class="row-num">${n}</div>
+      <button class="btn-remove" onclick="removeItem('disc-${n}')">×</button>
+      <div class="row-body" style="display:flex;flex-direction:column;gap:8px;">
+        <div class="field-group"><label>Topic / Item</label><input type="text" id="disc-topic-${n}" placeholder="What was discussed?"></div>
+        <div class="field-group"><label>Key Points / Summary</label><textarea id="disc-notes-${n}" placeholder="Summary of discussion, decisions, or outcome…"></textarea></div>
+        <div class="action-toggle-row">
+          <input type="checkbox" id="act-chk-${n}" onchange="toggleActionFields(${n}, this)">
+          <label class="action-toggle-label" for="act-chk-${n}">⚡ This has an action item</label>
+          <span class="action-badge" id="act-badge-${n}" style="display:none">Action Item</span>
+        </div>
+        <div class="inline-action-fields" id="act-fields-${n}">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--blue)">Action Item Details</div>
+          <div class="action-grid">
+            <div class="field-group"><label>Action Item</label><input type="text" id="act-task-${n}" placeholder="What needs to be done?"></div>
+            <div class="field-group"><label>Assigned To</label><input type="text" id="act-owner-${n}" placeholder="Name"></div>
+            <div class="field-group"><label>Due Date</label><input type="date" id="act-due-${n}"></div>
+          </div>
+        </div>
+      </div>`;
+    list.appendChild(div);
+    renumberRows();
+  }
+
+  function toggleActionFields(n, cb) {
+    const fields = document.getElementById(`act-fields-${n}`);
+    const badge  = document.getElementById(`act-badge-${n}`);
+    const row    = document.getElementById(`disc-${n}`);
+    if (cb.checked) {
+      fields.classList.add('visible'); badge.style.display = 'inline-flex'; row.style.borderColor = '#93C5FD';
+      const topic = document.getElementById(`disc-topic-${n}`)?.value.trim();
+      const taskField = document.getElementById(`act-task-${n}`);
+      if (topic && !taskField.value) taskField.value = topic;
+      document.getElementById(`act-owner-${n}`).focus();
+    } else {
+      fields.classList.remove('visible'); badge.style.display = 'none'; row.style.borderColor = '';
+    }
+  }
+
+  function removeItem(id) { const el = document.getElementById(id); if (el) el.remove(); renumberRows(); }
+  function renumberRows() {
+    let i = 1;
+    document.querySelectorAll('#discussed-list .row-num').forEach(n => { n.textContent = i++; });
+  }
+
+  // ── SUBMIT ────────────────────────────────────────────────────────────────
+  async function submitForm() {
+    const date        = document.getElementById('f-date').value;
+    const time        = document.getElementById('f-time').value;
+    const location    = document.getElementById('f-location').value.trim();
+    const topic       = document.getElementById('f-topic').value.trim();
+    const facilitator = document.getElementById('f-facilitator').value.trim();
+    const recorder    = document.getElementById('f-recorder').value.trim();
+    const notes       = document.getElementById('f-notes').value.trim();
+    const recipients  = getSelectedEmails();
+
+    if (!topic)              { showBanner('error', 'Please enter a meeting topic.'); return; }
+    if (!facilitator)        { showBanner('error', 'Please enter the facilitator name.'); return; }
+    if (!recipients.length)  { showBanner('error', 'Please select at least one recipient.'); return; }
+
+    const discussedItems = [];
+    const actionItems = [];
+    document.querySelectorAll('#discussed-list .item-row').forEach((row, idx) => {
+      const id = row.id.replace('disc-','');
+      const t = (document.getElementById(`disc-topic-${id}`)?.value || '').trim();
+      const n = (document.getElementById(`disc-notes-${id}`)?.value || '').trim();
+      if (t || n) discussedItems.push({ topic: t, notes: n });
+      const hasAction = document.getElementById(`act-chk-${id}`)?.checked;
+      if (hasAction) {
+        const task  = (document.getElementById(`act-task-${id}`)?.value || '').trim() || t || '(no task)';
+        const owner = (document.getElementById(`act-owner-${id}`)?.value || '').trim();
+        const due   = (document.getElementById(`act-due-${id}`)?.value || '').trim();
+        actionItems.push({ task, owner, due, topic: t });
+      }
+    });
+
+    const btn = document.getElementById('btn-submit');
+    btn.disabled = true;
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Sending…`;
+    showBanner('loading', 'Generating PDF and sending email — this takes a few seconds…');
+
+    try {
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, time, location, topic, facilitator, recorder, participants, discussedItems, actionItems, notes, recipients })
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Submission failed');
+      showBanner('success', `✅ Meeting minutes sent! PDF emailed to ${recipients.join(', ')}.`);
+      btn.innerHTML = `✓ Sent`;
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg> Submit & Send PDF`;
+      }, 4000);
+    } catch (err) {
+      showBanner('error', `Error: ${err.message}`);
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg> Submit & Send PDF`;
+    }
+  }
+
+  // ── CLEAR ─────────────────────────────────────────────────────────────────
+  function clearForm() {
+    if (!confirm('Clear all form data?')) return;
+    const today = new Date();
+    document.getElementById('f-date').valueAsDate = today;
+    const hh = String(today.getHours()).padStart(2,'0');
+    const mm = String(today.getMinutes()).padStart(2,'0');
+    document.getElementById('f-time').value = `${hh}:${mm}`;
+    ['f-location','f-topic','f-facilitator','f-recorder','f-notes'].forEach(id => document.getElementById(id).value = '');
+    participants = []; renderTags();
+    DEFAULT_RECIPIENTS.forEach((_, i) => {
+      const cb = document.getElementById(`chk-${i}`);
+      if (cb) { cb.checked = true; document.getElementById(`row-${i}`).classList.add('checked'); }
+    });
+    customEmails = []; renderCustomTags();
+    document.getElementById('discussed-list').innerHTML = '';
+    discussedCount = 0;
+    addDiscussedItem(); addDiscussedItem();
+    hideBanner();
+  }
+
+  // ── HELPERS ───────────────────────────────────────────────────────────────
+  function showBanner(type, msg) {
+    const b = document.getElementById('banner');
+    b.className = `banner ${type}`;
+    b.textContent = msg;
+    b.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  function hideBanner() { document.getElementById('banner').className = 'banner'; }
+  function escHtml(str) { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function toast(msg, err = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.style.background = err ? 'var(--red)' : 'var(--nav)';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+</script>
+</body>
+</html>
