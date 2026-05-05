@@ -178,7 +178,7 @@ module.exports = async (req, res) => {
     const emailSubject = `Meeting Minutes | ${topic} | ${fDate}`;
 
     await resend.emails.send({
-      from: 'Meeting Minutes <minutes@fontainespecialized.com>',
+      from: 'Fontaine Meeting Minutes <onboarding@resend.dev>',
       to: recipients,
       subject: emailSubject,
       html: `
@@ -207,7 +207,7 @@ module.exports = async (req, res) => {
       }]
     });
 
-    return res.status(200).json({ ok: true, fileName });
+    return res.status(200).json({ ok: true, fileName, pdf: pdfBuffer.toString('base64') });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: err.message || 'Server error' });
