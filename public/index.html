@@ -409,7 +409,20 @@
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Submission failed');
-      showBanner('success', `✅ Meeting minutes sent! PDF emailed to ${recipients.join(', ')}.`);
+
+      // Trigger PDF download in browser
+      if (json.pdf) {
+        const bytes = Uint8Array.from(atob(json.pdf), c => c.charCodeAt(0));
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = json.fileName;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      showBanner('success', `✅ PDF downloaded and emailed to ${recipients.join(', ')}.`);
       btn.innerHTML = `✓ Sent`;
       setTimeout(() => {
         btn.disabled = false;
